@@ -47,6 +47,12 @@ def debug_requests():
     return jsonify(store.REQUESTS)
 
 
+@app.route("/debug/clients", methods=["GET"])
+def debug_clients():
+    """List registered client profiles (PINs included for demo only)."""
+    return jsonify(store.CLIENTS)
+
+
 @app.route("/debug/locations", methods=["GET"])
 def debug_locations():
     return jsonify(store.LOCATIONS)
