@@ -14,53 +14,10 @@ from datetime import datetime
 # ---- Reference data ------------------------------------------------------
 
 LOCATIONS = [
-    {"id": 1, "name": "Baringo County", "lat": 0.4667, "lng": 35.9667},
-    {"id": 2, "name": "Bomet County", "lat": -0.7833, "lng": 35.3417},
-    {"id": 3, "name": "Bungoma County", "lat": 0.5635, "lng": 34.5606},
-    {"id": 4, "name": "Busia County", "lat": 0.4347, "lng": 34.2422},
-    {"id": 5, "name": "Elgeyo-Marakwet County", "lat": 1.0491, "lng": 35.4782},
-    {"id": 6, "name": "Embu County", "lat": -0.5391, "lng": 37.4574},
-    {"id": 7, "name": "Garissa County", "lat": -0.4532, "lng": 39.6461},
-    {"id": 8, "name": "Homa Bay County", "lat": -0.5273, "lng": 34.4571},
-    {"id": 9, "name": "Isiolo County", "lat": 0.3546, "lng": 37.5822},
-    {"id": 10, "name": "Kajiado County", "lat": -1.8524, "lng": 36.7768},
-    {"id": 11, "name": "Kakamega County", "lat": 0.2827, "lng": 34.7519},
-    {"id": 12, "name": "Kericho County", "lat": -0.3689, "lng": 35.2863},
-    {"id": 13, "name": "Kiambu County", "lat": -1.1714, "lng": 36.8356},
-    {"id": 14, "name": "Kilifi County", "lat": -3.6305, "lng": 39.8499},
-    {"id": 15, "name": "Kirinyaga County", "lat": -0.6591, "lng": 37.3827},
-    {"id": 16, "name": "Kisii County", "lat": -0.6817, "lng": 34.7667},
-    {"id": 17, "name": "Kisumu County", "lat": -0.0917, "lng": 34.7680},
-    {"id": 18, "name": "Kitui County", "lat": -1.3667, "lng": 38.0106},
-    {"id": 19, "name": "Kwale County", "lat": -4.1738, "lng": 39.4521},
-    {"id": 20, "name": "Laikipia County", "lat": 0.0167, "lng": 36.9500},
-    {"id": 21, "name": "Lamu County", "lat": -2.2717, "lng": 40.9020},
-    {"id": 22, "name": "Machakos County", "lat": -1.5177, "lng": 37.2634},
-    {"id": 23, "name": "Makueni County", "lat": -1.8039, "lng": 37.6203},
-    {"id": 24, "name": "Mandera County", "lat": 3.9366, "lng": 41.8670},
-    {"id": 25, "name": "Marsabit County", "lat": 2.3284, "lng": 37.9899},
-    {"id": 26, "name": "Meru County", "lat": 0.0463, "lng": 37.6559},
-    {"id": 27, "name": "Migori County", "lat": -1.0634, "lng": 34.4731},
-    {"id": 28, "name": "Mombasa County", "lat": -4.0435, "lng": 39.6682},
-    {"id": 29, "name": "Murang'a County", "lat": -0.7839, "lng": 37.0400},
-    {"id": 30, "name": "Nairobi County", "lat": -1.2921, "lng": 36.8219},
-    {"id": 31, "name": "Nakuru County", "lat": -0.3031, "lng": 36.0800},
-    {"id": 32, "name": "Nandi County", "lat": 0.1833, "lng": 35.1000},
-    {"id": 33, "name": "Narok County", "lat": -1.0876, "lng": 35.8711},
-    {"id": 34, "name": "Nyamira County", "lat": -0.5633, "lng": 34.9358},
-    {"id": 35, "name": "Nyandarua County", "lat": -0.1804, "lng": 36.5220},
-    {"id": 36, "name": "Nyeri County", "lat": -0.4167, "lng": 36.9500},
-    {"id": 37, "name": "Samburu County", "lat": 1.2150, "lng": 36.9541},
-    {"id": 38, "name": "Siaya County", "lat": 0.0612, "lng": 34.2881},
-    {"id": 39, "name": "Taita-Taveta County", "lat": -3.3167, "lng": 38.4833},
-    {"id": 40, "name": "Tana River County", "lat": -1.5000, "lng": 39.7500},
-    {"id": 41, "name": "Tharaka-Nithi County", "lat": -0.3000, "lng": 37.9833},
-    {"id": 42, "name": "Trans Nzoia County", "lat": 1.0167, "lng": 35.0000},
-    {"id": 43, "name": "Turkana County", "lat": 3.1167, "lng": 35.6000},
-    {"id": 44, "name": "Uasin Gishu County", "lat": 0.5143, "lng": 35.2698},
-    {"id": 45, "name": "Vihiga County", "lat": 0.0833, "lng": 34.7167},
-    {"id": 46, "name": "Wajir County", "lat": 1.7471, "lng": 40.0573},
-    {"id": 47, "name": "West Pokot County", "lat": 1.6210, "lng": 35.1199},
+    {"id": 1, "name": "Kiambu Town", "lat": -1.1714, "lng": 36.8356},
+    {"id": 2, "name": "Ruaka", "lat": -1.2033, "lng": 36.7833},
+    {"id": 3, "name": "Ruiru", "lat": -1.1495, "lng": 36.9622},
+    {"id": 4, "name": "Thika", "lat": -1.0388, "lng": 37.0834},
     {"id": 48, "name": "Other", "lat": 0, "lng": 0},
 ]
 
@@ -81,7 +38,7 @@ MECHANICS = [
         "id": "m1",
         "name": "Mike Auto Garage",
         "phone": "+254708362216",
-        "location_id": 13,
+        "location_id": 1,
         "lat": -1.1745,
         "lng": 36.8340,
         "services": [1, 3, 6],
@@ -91,7 +48,7 @@ MECHANICS = [
         "id": "m2",
         "name": "John Motors",
         "phone": "+254700333444",
-        "location_id": 13,
+        "location_id": 1,
         "lat": -1.1600,
         "lng": 36.8400,
         "services": [2, 4, 5],
@@ -101,7 +58,7 @@ MECHANICS = [
         "id": "m3",
         "name": "Wanjiku Auto Care",
         "phone": "+254700555666",
-        "location_id": 13,
+        "location_id": 1,
         "lat": -1.1900,
         "lng": 36.8500,
         "services": [3, 6],
@@ -111,7 +68,7 @@ MECHANICS = [
         "id": "m4",
         "name": "Ruaka Quick Fix",
         "phone": "+254700777888",
-        "location_id": 13,
+        "location_id": 2,
         "lat": -1.2050,
         "lng": 36.7800,
         "services": [1, 2, 3, 4, 5, 6],
@@ -122,6 +79,7 @@ MECHANICS = [
 # ---- Requests (breakdown dispatch tickets) --------------------------
 
 REQUESTS = []
+CUSTOM_LOCATIONS = []
 
 
 # ---- Helpers ----------------------------------------------------------
@@ -149,15 +107,30 @@ def get_services():
 
 
 def get_location_by_id(location_id):
-    return next((l for l in LOCATIONS if l["id"] == int(location_id)), None)
+    location_id = int(location_id)
+    return next(
+        (location for location in LOCATIONS + CUSTOM_LOCATIONS if location["id"] == location_id),
+        None,
+    )
 
 
 def get_location_by_name(name):
     normalized_name = name.strip().casefold()
-    return next(
-        (location for location in LOCATIONS if location["name"].casefold() == normalized_name),
+    location = next(
+        (location for location in LOCATIONS + CUSTOM_LOCATIONS
+         if location["name"].casefold() == normalized_name),
         None,
     )
+    if location or not normalized_name:
+        return location
+    location = {
+        "id": max([48] + [item["id"] for item in CUSTOM_LOCATIONS]) + 1,
+        "name": name.strip(),
+        "lat": 0,
+        "lng": 0,
+    }
+    CUSTOM_LOCATIONS.append(location)
+    return location
 
 
 def get_service_by_id(service_id):

@@ -86,7 +86,9 @@ def _main_menu_text(language):
 def _locations_menu_text(language="en"):
     lines = [TRANSLATIONS[language]["select_location"]]
     for loc in store.get_locations():
-        lines.append(f"{loc['id']}. {loc['name']}")
+        if loc["id"] != 48:
+            lines.append(f"{loc['id']}. {loc['name']}")
+    lines.append("48. Other")
     lines.append(TRANSLATIONS[language]["other_location"])
     return "\n".join(lines)
 
