@@ -140,6 +140,18 @@ def get_mechanic_by_id(mechanic_id):
     return next((m for m in MECHANICS if m["id"] == mechanic_id), None)
 
 
+def get_mechanic_by_phone(phone):
+    target = _normalize_phone(phone)
+    return next(
+        (mechanic for mechanic in MECHANICS if _normalize_phone(mechanic["phone"]) == target),
+        None,
+    )
+
+
+def get_requests_for_mechanic(mechanic_id):
+    return [request for request in REQUESTS if request["mechanic_id"] == mechanic_id]
+
+
 def find_mechanics(location_id, service_id):
     """Available mechanics offering a service, sorted nearest-first."""
     location = get_location_by_id(location_id)

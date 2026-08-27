@@ -45,6 +45,10 @@ TRANSLATIONS = {
         "find_service": "Find specific service",
         "my_requests": "My requests",
         "register_mechanic": "Register as mechanic",
+        "mechanic_login": "Mechanic login",
+        "login_phone": "Enter your registered phone number:",
+        "login_failed": "No mechanic account found for that phone number.",
+        "no_pending": "You have no pending requests.",
     },
     "sw": {
         "select_location": "Chagua eneo lako:",
@@ -68,6 +72,10 @@ TRANSLATIONS = {
         "find_service": "Tafuta huduma maalum",
         "my_requests": "Maombi yangu",
         "register_mechanic": "Jisajili kama fundi",
+        "mechanic_login": "Kuingia kwa fundi",
+        "login_phone": "Ingiza nambari yako ya simu iliyosajiliwa:",
+        "login_failed": "Hakuna akaunti ya fundi iliyopatikana kwa nambari hiyo.",
+        "no_pending": "Huna maombi yanayosubiri.",
     },
 }
 
@@ -86,6 +94,7 @@ def _main_menu_text(language):
         f"3. {labels['find_service']}\n"
         f"4. {labels['my_requests']}\n"
         f"5. {labels['register_mechanic']}"
+        f"\n6. {labels['mechanic_login']}"
     )
 
 
@@ -199,6 +208,31 @@ def ussd():
             + [str(custom_location["id"])]
             + parts[location_index + 2:]
         )
+
+    # ---- 6. Mechanic login: phone number -> pending requests --------
+    if root == "6":
+        if len(parts) == 1:
+            return _menu_response(TRANSLATIONS[language]["login_phone"])
+
+        if len(parts) == 2:
+            mechanic = store.get_mechanic_by_phone(parts[1])
+            if not mechanic:
+                return _menu_response(TRANSLATIONS[language]["login_failed"], end=True)
+            requests = store.get_requests_for_mechanic(mechanic["id"])
+            pending = [item for item in requests if item["status"] == "PENDING"]
+            lines = [
+                f"{TRANSLATIONS[language]['welcome']}, {mechanic['name']}.",
+                f"Email: {mechanic.get('email', 'Not provided')}",
+            ]
+            if pending:
+                lines.append(f"Pending requests: {len(pending)}")
+                lines.extend(f"Ref: {item['id']}" for item in pending[-3:])
+                lines.append("Reply YES or NO by SMS to respond.")
+            else:
+                lines.append(TRANSLATIONS[language]["no_pending"])
+            return _menu_response("\n".join(lines), end=True)
+
+        return _menu_response(TRANSLATIONS[language]["login_failed"], end=True)
 
     # ---- 1. Find a mechanic: location -> service -> mechanic list ----
     if root == "1":
