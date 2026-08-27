@@ -59,21 +59,25 @@ simulate a full session with curl by sending the accumulated `text`:
 curl -X POST http://localhost:5000/ussd \
   -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text="
 
-# Step 2: chose "1" (Find a mechanic)
+# Step 2: choose "1" (English)
 curl -X POST http://localhost:5000/ussd \
   -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1"
 
-# Step 3: chose location 1 (Kiambu Town)
+# Step 3: choose "1" (Find a mechanic)
 curl -X POST http://localhost:5000/ussd \
   -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1"
 
-# Step 4: chose service 3 (Battery)
+# Step 4: choose location 1 (Kiambu Town)
 curl -X POST http://localhost:5000/ussd \
-  -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1*3"
+  -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1*1"
 
-# Step 5: chose mechanic 1 from the returned list
+# Step 5: choose service 3 (Battery)
 curl -X POST http://localhost:5000/ussd \
-  -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1*3*1"
+  -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1*1*3"
+
+# Step 6: choose mechanic 1 from the returned list
+curl -X POST http://localhost:5000/ussd \
+  -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1*1*3*1"
 ```
 
 Then simulate the mechanic accepting via the SMS webhook:

@@ -34,6 +34,12 @@ TRANSLATIONS = {
         "services_hint": "Enter numbers separated by commas (e.g. 1,3,6)",
         "invalid": "Invalid selection.",
         "invalid_mechanic": "Invalid mechanic selection.",
+        "welcome": "Welcome to JuaSmart",
+        "find_mechanic": "Find a mechanic",
+        "report_breakdown": "Report breakdown",
+        "find_service": "Find specific service",
+        "my_requests": "My requests",
+        "register_mechanic": "Register as mechanic",
     },
     "sw": {
         "select_location": "Chagua eneo lako:",
@@ -48,6 +54,12 @@ TRANSLATIONS = {
         "services_hint": "Ingiza nambari zikitenganishwa kwa koma (mfano 1,3,6)",
         "invalid": "Chaguo si sahihi.",
         "invalid_mechanic": "Chaguo la fundi si sahihi.",
+        "welcome": "Karibu JuaSmart",
+        "find_mechanic": "Tafuta fundi",
+        "report_breakdown": "Ripoti kuharibika kwa gari",
+        "find_service": "Tafuta huduma maalum",
+        "my_requests": "Maombi yangu",
+        "register_mechanic": "Jisajili kama fundi",
     },
 }
 
@@ -55,6 +67,18 @@ TRANSLATIONS = {
 def _menu_response(body, end=False):
     prefix = "END" if end else "CON"
     return Response(f"{prefix} {body}", mimetype="text/plain")
+
+
+def _main_menu_text(language):
+    labels = TRANSLATIONS[language]
+    return (
+        f"{labels['welcome']}\n"
+        f"1. {labels['find_mechanic']}\n"
+        f"2. {labels['report_breakdown']}\n"
+        f"3. {labels['find_service']}\n"
+        f"4. {labels['my_requests']}\n"
+        f"5. {labels['register_mechanic']}"
+    )
 
 
 def _locations_menu_text(language="en"):
@@ -132,36 +156,21 @@ def ussd():
 
     parts = text.split("*") if text else []
 
-    # ---- Root menu ---------------------------------------------------
+    # ---- Language selection and root menu ---------------------------
     if text == "":
-        return _menu_response(
-            "Welcome to JuaSmart\n"
-            "1. Find a mechanic\n"
-            "2. Report breakdown\n"
-            "3. Find specific service\n"
-            "4. My requests\n"
-            "5. Register as mechanic\n"
-            "6. Language / Lugha"
-        )
+        return _menu_response("Choose language / Chagua lugha:\n1. English\n2. Kiswahili")
 
-    root = parts[0]
+    if not session_id or session_id not in SESSION_LANGUAGES:
+        root = parts[0] if parts else ""
+        if root not in {"1", "2"} or len(parts) != 1:
+            return _menu_response("Choose language / Chagua lugha:\n1. English\n2. Kiswahili", end=True)
+        language = "en" if root == "1" else "sw"
+        SESSION_LANGUAGES[session_id] = language
+        return _menu_response(_main_menu_text(language))
 
-    if root == "6":
-        if len(parts) == 1:
-            return _menu_response(TRANSLATIONS[language]["language"])
-        if len(parts) == 2 and parts[1] in {"1", "2"}:
-            language = "en" if parts[1] == "1" else "sw"
-            SESSION_LANGUAGES[session_id] = language
-            message = (
-                TRANSLATIONS[language]["language_saved"]
-                if language == "en"
-                else TRANSLATIONS[language]["language_saved_sw"]
-            )
-            return _menu_response(message + "\n" + "Welcome to JuaSmart\n"
-                "1. Find a mechanic\n2. Report breakdown\n"
-                "3. Find specific service\n4. My requests\n"
-                "5. Register as mechanic\n6. Language / Lugha")
-        return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+    # The gateway keeps the language choice in the accumulated text path.
+    parts = parts[1:]
+    root = parts[0] if parts else ""
 
     # ---- 1. Find a mechanic: location -> service -> mechanic list ----
     if root == "1":
