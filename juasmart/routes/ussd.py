@@ -50,14 +50,21 @@ def _mechanics_list_text(mechanics, location_name):
 
 
 def _dispatch_request(driver_phone, mechanic, location, service):
-    """Create the request record and notify the mechanic by SMS."""
+    """
+    Create the request, then fire SMS (SokoSure-style USSD → SMS handoff).
+
+    SMS failures are swallowed so the USSD session can still END cleanly.
+    """
+    from utils.sms import normalize_phone
+
+    driver_phone = normalize_phone(driver_phone)
     req = store.create_request(
         driver_phone=driver_phone,
         mechanic_id=mechanic["id"],
         location_id=location["id"],
         service_id=service["id"],
     )
-    sms_body = (
+    mechanic_sms = (
         "NEW BREAKDOWN REQUEST\n"
         f"Ref: {req['id']}\n"
         f"Service: {service['name']}\n"
@@ -65,7 +72,22 @@ def _dispatch_request(driver_phone, mechanic, location, service):
         f"Customer: {driver_phone}\n"
         "Reply YES to ACCEPT or NO to DECLINE"
     )
-    send_sms(mechanic["phone"], sms_body)
+    driver_sms = (
+        "JuaSmart: request sent.\n"
+        f"Ref: {req['id']}\n"
+        f"Garage: {mechanic['name']}\n"
+        "You'll get another SMS when they reply YES or NO."
+    )
+    # Same pattern as SokoSure welcome SMS after registration: try/except,
+    # never break the USSD END response.
+    try:
+        send_sms(mechanic["phone"], mechanic_sms)
+    except Exception:  # noqa: BLE001
+        pass
+    try:
+        send_sms(driver_phone, driver_sms)
+    except Exception:  # noqa: BLE001
+        pass
     return req
 
 
@@ -120,7 +142,8 @@ def ussd():
             return _menu_response(
                 f"Request sent to {chosen['name']}.\n"
                 f"Ref: {req['id']}\n"
-                "You'll get an SMS once they respond.",
+                "Check your SMS for confirmation.\n"
+                "You'll get another SMS once they respond.",
                 end=True,
             )
 
@@ -152,7 +175,8 @@ def ussd():
             return _menu_response(
                 f"Request sent to {chosen['name']}.\n"
                 f"Ref: {req['id']}\n"
-                "You'll get an SMS once they respond.",
+                "Check your SMS for confirmation.\n"
+                "You'll get another SMS once they respond.",
                 end=True,
             )
 
@@ -187,14 +211,18 @@ def ussd():
             return _menu_response(
                 f"Request sent to {chosen['name']}.\n"
                 f"Ref: {req['id']}\n"
-                "You'll get an SMS once they respond.",
+                "Check your SMS for confirmation.\n"
+                "You'll get another SMS once they respond.",
                 end=True,
             )
 
     # ---- 4. My requests: show status of latest request ----------------
     if root == "4":
+        from utils.sms import normalize_phone
+
+        driver = normalize_phone(phone_number)
         my_requests = [
-            r for r in store.REQUESTS if r["driver_phone"] == phone_number
+            r for r in store.REQUESTS if store._normalize_phone(r["driver_phone"]) == driver
         ]
         if not my_requests:
             return _menu_response("You have no requests yet.", end=True)
