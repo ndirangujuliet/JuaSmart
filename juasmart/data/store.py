@@ -127,7 +127,7 @@ def get_location_by_name(name):
     if location or not normalized_name:
         return location
     location = {
-        "id": max([48] + [item["id"] for item in CUSTOM_LOCATIONS]) + 1,
+        "id": max([5] + [item["id"] for item in CUSTOM_LOCATIONS]) + 1,
         "name": name.strip(),
         "lat": 0,
         "lng": 0,

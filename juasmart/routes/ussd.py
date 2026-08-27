@@ -153,9 +153,9 @@ def _main_menu_text(language):
 def _locations_menu_text(language="en"):
     lines = [TRANSLATIONS[language]["select_location"]]
     for loc in store.get_locations():
-        if loc["id"] != 48:
+        if loc["id"] != 5:
             lines.append(f"{loc['id']}. {loc['name']}")
-    lines.append("48. Other")
+    lines.append("5. Other")
     lines.append(TRANSLATIONS[language]["other_location"])
     return "\n".join(lines)
 
@@ -284,14 +284,14 @@ def ussd():
     parts = parts[1:]
     root = parts[0] if parts else ""
 
-    if root in {"1", "2"} and len(parts) == 2 and parts[1] == "48":
+    if root in {"1", "2"} and len(parts) == 2 and parts[1] == "5":
         return _menu_response(TRANSLATIONS[language]["other_location"])
-    if root in {"3", "5"} and len(parts) >= 3 and parts[2] == "48":
+    if root in {"3", "5"} and len(parts) >= 3 and parts[2] == "5":
         if len(parts) == 3:
             return _menu_response(TRANSLATIONS[language]["other_location"])
 
     location_index = 1 if root in {"1", "2"} else 2 if root in {"3", "5"} else None
-    if location_index is not None and len(parts) > location_index + 1 and parts[location_index] == "48":
+    if location_index is not None and len(parts) > location_index + 1 and parts[location_index] == "5":
         custom_location = store.get_location_by_name(parts[location_index + 1])
         if not custom_location:
             return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
@@ -463,10 +463,8 @@ def ussd():
             )
             return _request_sent_response(language, chosen["name"], req["id"])
 
-    # ---- 2. Report breakdown: location -> auto "General repair" ----
+    # ---- 2. Report breakdown: location -> service -> phone -> mechanic
     if root == "2":
-        general_service = store.get_service_by_id(6)  # General repair
-
         if len(parts) == 1:
             return _menu_response(_locations_menu_text(language))
 
@@ -474,25 +472,38 @@ def ussd():
             location = store.get_location_by_id(parts[1])
             if not location:
                 return _menu_response(labels["invalid"], end=True)
-            mechanics = store.find_mechanics(location["id"], general_service["id"])
-            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
+            return _menu_response(_services_menu_text(language))
 
         if len(parts) == 3:
             location = store.get_location_by_id(parts[1])
-            if not location:
+            service = store.get_service_by_id(parts[2])
+            if not location or not service:
                 return _menu_response(labels["invalid"], end=True)
-            mechanics = store.find_mechanics(location["id"], general_service["id"])
+            return _menu_response(labels["phone"])
+
+        if len(parts) == 4:
+            location = store.get_location_by_id(parts[1])
+            service = store.get_service_by_id(parts[2])
+            phone = parts[3].strip()
+            if not location or not service or not re.fullmatch(r"\+?\d{9,15}", phone):
+                return _menu_response(labels["invalid"], end=True)
+            mechanics = store.find_mechanics(location["id"], service["id"])
+            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
+
+        if len(parts) == 5:
+            location = store.get_location_by_id(parts[1])
+            service = store.get_service_by_id(parts[2])
+            phone = parts[3].strip()
+            if not location or not service or not re.fullmatch(r"\+?\d{9,15}", phone):
+                return _menu_response(labels["invalid"], end=True)
+            mechanics = store.find_mechanics(location["id"], service["id"])
             try:
-                chosen = mechanics[int(parts[2]) - 1]
+                chosen = mechanics[int(parts[4]) - 1]
             except (ValueError, IndexError):
                 return _menu_response(labels["invalid_mechanic"], end=True)
 
             req = _dispatch_request(
-                phone_number,
-                chosen,
-                location,
-                general_service,
-                session_id=session_id,
+                phone, chosen, location, service, session_id=session_id
             )
             return _request_sent_response(language, chosen["name"], req["id"])
 
