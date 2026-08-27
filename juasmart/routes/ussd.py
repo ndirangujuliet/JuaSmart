@@ -333,26 +333,26 @@ def ussd():
             )
 
         if len(parts) == 4:
-            name = parts[1]
-            location = store.get_location_by_id(parts[2])
-            if not location:
-                return _menu_response("Invalid location.", end=True)
             try:
-                service_ids = [s.strip() for s in parts[3].split(",")]
-                service_ids = [
-                    s for s in service_ids if store.get_service_by_id(s)
-                ]
-                if not service_ids:
+                name = parts[1].strip()
+                location = store.get_location_by_id(parts[2])
+                service_ids = [s.strip() for s in parts[3].split(",") if s.strip()]
+                if not name or not location or not service_ids:
                     raise ValueError
-            except ValueError:
-                return _menu_response("Invalid service selection.", end=True)
+                if any(store.get_service_by_id(service_id) is None for service_id in service_ids):
+                    raise ValueError
+            except (TypeError, ValueError):
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
 
-            mechanic = store.register_mechanic(
-                name=name,
-                phone=phone_number,
-                location_id=location["id"],
-                service_ids=service_ids,
-            )
+            try:
+                mechanic = store.register_mechanic(
+                    name=name,
+                    phone=phone_number,
+                    location_id=location["id"],
+                    service_ids=service_ids,
+                )
+            except (TypeError, ValueError, KeyError):
+                return _menu_response("Invalid service selection.", end=True)
             return _menu_response(
                 f"Registered! Welcome, {mechanic['name']}.\n"
                 f"Location: {location['name']}\n"
