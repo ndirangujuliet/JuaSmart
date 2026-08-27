@@ -103,9 +103,9 @@ def _main_menu_text(language):
 def _locations_menu_text(language="en"):
     lines = [TRANSLATIONS[language]["select_location"]]
     for loc in store.get_locations():
-        if loc["id"] != 48:
+        if loc["id"] != 5:
             lines.append(f"{loc['id']}. {loc['name']}")
-    lines.append("48. Other")
+    lines.append("5. Other")
     lines.append(TRANSLATIONS[language]["other_location"])
     return "\n".join(lines)
 
@@ -194,14 +194,14 @@ def ussd():
     parts = parts[1:]
     root = parts[0] if parts else ""
 
-    if root in {"1", "2"} and len(parts) == 2 and parts[1] == "48":
+    if root in {"1", "2"} and len(parts) == 2 and parts[1] == "5":
         return _menu_response(TRANSLATIONS[language]["other_location"])
-    if root in {"3", "5"} and len(parts) >= 3 and parts[2] == "48":
+    if root in {"3", "5"} and len(parts) >= 3 and parts[2] == "5":
         if len(parts) == 3:
             return _menu_response(TRANSLATIONS[language]["other_location"])
 
     location_index = 1 if root in {"1", "2"} else 2 if root in {"3", "5"} else None
-    if location_index is not None and len(parts) > location_index + 1 and parts[location_index] == "48":
+    if location_index is not None and len(parts) > location_index + 1 and parts[location_index] == "5":
         custom_location = store.get_location_by_name(parts[location_index + 1])
         if not custom_location:
             return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
