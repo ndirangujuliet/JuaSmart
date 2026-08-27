@@ -13,8 +13,13 @@ def _database_path():
 
 def _connect():
     path = _database_path()
-    path.parent.mkdir(parents=True, exist_ok=True)
-    connection = sqlite3.connect(path)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        connection = sqlite3.connect(path)
+    except (OSError, sqlite3.OperationalError):
+        # Keep SMS delivery working when a configured Render disk is absent.
+        path = Path("sms_logs.db")
+        connection = sqlite3.connect(path)
     connection.row_factory = sqlite3.Row
     connection.execute(
         """
