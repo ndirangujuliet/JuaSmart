@@ -34,6 +34,7 @@ TRANSLATIONS = {
         "services_hint": "Enter numbers separated by commas (e.g. 1,3,6)",
         "invalid": "Invalid selection.",
         "invalid_mechanic": "Invalid mechanic selection.",
+        "other_location": "Enter your county name:",
         "welcome": "Welcome to JuaSmart",
         "find_mechanic": "Find a mechanic",
         "report_breakdown": "Report breakdown",
@@ -54,6 +55,7 @@ TRANSLATIONS = {
         "services_hint": "Ingiza nambari zikitenganishwa kwa koma (mfano 1,3,6)",
         "invalid": "Chaguo si sahihi.",
         "invalid_mechanic": "Chaguo la fundi si sahihi.",
+        "other_location": "Ingiza jina la kaunti yako:",
         "welcome": "Karibu JuaSmart",
         "find_mechanic": "Tafuta fundi",
         "report_breakdown": "Ripoti kuharibika kwa gari",
@@ -85,6 +87,7 @@ def _locations_menu_text(language="en"):
     lines = [TRANSLATIONS[language]["select_location"]]
     for loc in store.get_locations():
         lines.append(f"{loc['id']}. {loc['name']}")
+    lines.append(TRANSLATIONS[language]["other_location"])
     return "\n".join(lines)
 
 
@@ -171,6 +174,23 @@ def ussd():
     # The gateway keeps the language choice in the accumulated text path.
     parts = parts[1:]
     root = parts[0] if parts else ""
+
+    if root in {"1", "2"} and len(parts) == 2 and parts[1] == "48":
+        return _menu_response(TRANSLATIONS[language]["other_location"])
+    if root in {"3", "5"} and len(parts) >= 3 and parts[2] == "48":
+        if len(parts) == 3:
+            return _menu_response(TRANSLATIONS[language]["other_location"])
+
+    location_index = 1 if root in {"1", "2"} else 2 if root in {"3", "5"} else None
+    if location_index is not None and len(parts) > location_index + 1 and parts[location_index] == "48":
+        custom_location = store.get_location_by_name(parts[location_index + 1])
+        if not custom_location:
+            return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+        parts = (
+            parts[:location_index]
+            + [str(custom_location["id"])]
+            + parts[location_index + 2:]
+        )
 
     # ---- 1. Find a mechanic: location -> service -> mechanic list ----
     if root == "1":
