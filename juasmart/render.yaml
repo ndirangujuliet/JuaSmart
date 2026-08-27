@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: juasmart-ussd-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: AT_USERNAME
+        value: sandbox
+      - key: AT_API_KEY
+        sync: false
+      - key: AT_SHORTCODE
+        sync: false
+      - key: SMS_DRY_RUN
+        value: "true"
+      - key: SMS_DB_PATH
+        value: /var/data/sms_logs.db
