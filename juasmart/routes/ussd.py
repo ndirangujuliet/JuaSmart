@@ -18,6 +18,38 @@ from data import store
 from utils.sms import send_sms
 
 ussd_bp = Blueprint("ussd", __name__)
+SESSION_LANGUAGES = {}
+
+TRANSLATIONS = {
+    "en": {
+        "select_location": "Select your location:",
+        "service_needed": "What service do you need?",
+        "available": "Available mechanics near {location}:",
+        "no_mechanics": "Sorry, no available mechanics found near {location} right now.",
+        "choose_mechanic": "Reply with the number to request assistance.",
+        "language": "Choose language:\n1. English\n2. Kiswahili",
+        "language_saved": "Language set to English.",
+        "language_saved_sw": "Lugha imewekwa kuwa Kiswahili.",
+        "name": "Enter your garage/business name:",
+        "services_hint": "Enter numbers separated by commas (e.g. 1,3,6)",
+        "invalid": "Invalid selection.",
+        "invalid_mechanic": "Invalid mechanic selection.",
+    },
+    "sw": {
+        "select_location": "Chagua eneo lako:",
+        "service_needed": "Unahitaji huduma gani?",
+        "available": "Mafundi wanaopatikana karibu na {location}:",
+        "no_mechanics": "Samahani, hakuna fundi anayepatikana karibu na {location} kwa sasa.",
+        "choose_mechanic": "Jibu kwa nambari kuomba msaada.",
+        "language": "Chagua lugha:\n1. Kiingereza\n2. Kiswahili",
+        "language_saved": "Lugha imewekwa kuwa Kiingereza.",
+        "language_saved_sw": "Lugha imewekwa kuwa Kiswahili.",
+        "name": "Ingiza jina la karakana/biashara:",
+        "services_hint": "Ingiza nambari zikitenganishwa kwa koma (mfano 1,3,6)",
+        "invalid": "Chaguo si sahihi.",
+        "invalid_mechanic": "Chaguo la fundi si sahihi.",
+    },
+}
 
 
 def _menu_response(body, end=False):
@@ -25,27 +57,27 @@ def _menu_response(body, end=False):
     return Response(f"{prefix} {body}", mimetype="text/plain")
 
 
-def _locations_menu_text():
-    lines = ["Select your location:"]
+def _locations_menu_text(language="en"):
+    lines = [TRANSLATIONS[language]["select_location"]]
     for loc in store.get_locations():
         lines.append(f"{loc['id']}. {loc['name']}")
     return "\n".join(lines)
 
 
-def _services_menu_text():
-    lines = ["What service do you need?"]
+def _services_menu_text(language="en"):
+    lines = [TRANSLATIONS[language]["service_needed"]]
     for svc in store.get_services():
         lines.append(f"{svc['id']}. {svc['name']}")
     return "\n".join(lines)
 
 
-def _mechanics_list_text(mechanics, location_name):
+def _mechanics_list_text(mechanics, location_name, language="en"):
     if not mechanics:
-        return f"Sorry, no available mechanics found near {location_name} right now."
-    lines = [f"Available mechanics near {location_name}:"]
+        return TRANSLATIONS[language]["no_mechanics"].format(location=location_name)
+    lines = [TRANSLATIONS[language]["available"].format(location=location_name)]
     for i, m in enumerate(mechanics, start=1):
         lines.append(f"{i}. {m['name']} - {m['distance_km']} km")
-    lines.append("Reply with the number to request assistance.")
+    lines.append(TRANSLATIONS[language]["choose_mechanic"])
     return "\n".join(lines)
 
 
@@ -93,8 +125,10 @@ def _dispatch_request(driver_phone, mechanic, location, service):
 
 @ussd_bp.route("/ussd", methods=["POST"])
 def ussd():
+    session_id = request.values.get("sessionId", "")
     phone_number = request.values.get("phoneNumber", "")
     text = request.values.get("text", "").strip()
+    language = SESSION_LANGUAGES.get(session_id, "en")
 
     parts = text.split("*") if text else []
 
@@ -106,37 +140,55 @@ def ussd():
             "2. Report breakdown\n"
             "3. Find specific service\n"
             "4. My requests\n"
-            "5. Register as mechanic"
+            "5. Register as mechanic\n"
+            "6. Language / Lugha"
         )
 
     root = parts[0]
 
+    if root == "6":
+        if len(parts) == 1:
+            return _menu_response(TRANSLATIONS[language]["language"])
+        if len(parts) == 2 and parts[1] in {"1", "2"}:
+            language = "en" if parts[1] == "1" else "sw"
+            SESSION_LANGUAGES[session_id] = language
+            message = (
+                TRANSLATIONS[language]["language_saved"]
+                if language == "en"
+                else TRANSLATIONS[language]["language_saved_sw"]
+            )
+            return _menu_response(message + "\n" + "Welcome to JuaSmart\n"
+                "1. Find a mechanic\n2. Report breakdown\n"
+                "3. Find specific service\n4. My requests\n"
+                "5. Register as mechanic\n6. Language / Lugha")
+        return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+
     # ---- 1. Find a mechanic: location -> service -> mechanic list ----
     if root == "1":
         if len(parts) == 1:
-            return _menu_response(_locations_menu_text())
+            return _menu_response(_locations_menu_text(language))
 
         if len(parts) == 2:
-            return _menu_response(_services_menu_text())
+            return _menu_response(_services_menu_text(language))
 
         if len(parts) == 3:
             location = store.get_location_by_id(parts[1])
             service = store.get_service_by_id(parts[2])
             if not location or not service:
-                return _menu_response("Invalid selection.", end=True)
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
             mechanics = store.find_mechanics(location["id"], service["id"])
-            return _menu_response(_mechanics_list_text(mechanics, location["name"]))
+            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
 
         if len(parts) == 4:
             location = store.get_location_by_id(parts[1])
             service = store.get_service_by_id(parts[2])
             if not location or not service:
-                return _menu_response("Invalid selection.", end=True)
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
             mechanics = store.find_mechanics(location["id"], service["id"])
             try:
                 chosen = mechanics[int(parts[3]) - 1]
             except (ValueError, IndexError):
-                return _menu_response("Invalid mechanic selection.", end=True)
+                return _menu_response(TRANSLATIONS[language]["invalid_mechanic"], end=True)
 
             req = _dispatch_request(phone_number, chosen, location, service)
             return _menu_response(
@@ -152,14 +204,14 @@ def ussd():
         general_service = store.get_service_by_id(6)  # General repair
 
         if len(parts) == 1:
-            return _menu_response(_locations_menu_text())
+            return _menu_response(_locations_menu_text(language))
 
         if len(parts) == 2:
             location = store.get_location_by_id(parts[1])
             if not location:
                 return _menu_response("Invalid selection.", end=True)
             mechanics = store.find_mechanics(location["id"], general_service["id"])
-            return _menu_response(_mechanics_list_text(mechanics, location["name"]))
+            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
 
         if len(parts) == 3:
             location = store.get_location_by_id(parts[1])
@@ -183,10 +235,10 @@ def ussd():
     # ---- 3. Find specific service: service -> location -> mechanics ----
     if root == "3":
         if len(parts) == 1:
-            return _menu_response(_services_menu_text())
+            return _menu_response(_services_menu_text(language))
 
         if len(parts) == 2:
-            return _menu_response(_locations_menu_text())
+            return _menu_response(_locations_menu_text(language))
 
         if len(parts) == 3:
             service = store.get_service_by_id(parts[1])
@@ -194,7 +246,7 @@ def ussd():
             if not service or not location:
                 return _menu_response("Invalid selection.", end=True)
             mechanics = store.find_mechanics(location["id"], service["id"])
-            return _menu_response(_mechanics_list_text(mechanics, location["name"]))
+            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
 
         if len(parts) == 4:
             service = store.get_service_by_id(parts[1])
@@ -241,12 +293,12 @@ def ussd():
             return _menu_response("Enter your garage/business name:")
 
         if len(parts) == 2:
-            return _menu_response(_locations_menu_text())
+            return _menu_response(_locations_menu_text(language))
 
         if len(parts) == 3:
             return _menu_response(
-                _services_menu_text()
-                + "\n\nEnter numbers separated by commas (e.g. 1,3,6)"
+                _services_menu_text(language)
+                + "\n\n" + TRANSLATIONS[language]["services_hint"]
             )
 
         if len(parts) == 4:
