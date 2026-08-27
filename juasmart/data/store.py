@@ -36,7 +36,7 @@ MECHANICS = [
     {
         "id": "m1",
         "name": "Mike Auto Garage",
-        "phone": "+254700111222",
+        "phone": "+254708362216",
         "location_id": 1,
         "lat": -1.1745,
         "lng": 36.8340,
