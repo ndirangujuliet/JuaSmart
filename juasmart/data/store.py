@@ -148,7 +148,11 @@ def find_mechanics(location_id, service_id):
 
     matches = []
     for m in MECHANICS:
-        if m["available"] and int(service_id) in m["services"]:
+        if (
+            m["available"]
+            and m["location_id"] == location["id"]
+            and int(service_id) in m["services"]
+        ):
             d = distance_km(location["lat"], location["lng"], m["lat"], m["lng"])
             matches.append({**m, "distance_km": round(d, 1)})
 
