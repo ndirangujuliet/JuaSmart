@@ -160,12 +160,13 @@ def find_mechanics(location_id, service_id):
     return matches
 
 
-def register_mechanic(name, phone, location_id, service_ids):
+def register_mechanic(name, phone, email, location_id, service_ids):
     location = get_location_by_id(location_id)
     mechanic = {
         "id": str(uuid.uuid4()),
         "name": name,
         "phone": _normalize_phone(phone),
+        "email": email,
         "location_id": int(location_id),
         "lat": location["lat"] if location else 0,
         "lng": location["lng"] if location else 0,

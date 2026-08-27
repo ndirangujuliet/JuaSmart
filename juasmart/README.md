@@ -80,6 +80,9 @@ curl -X POST http://localhost:5000/ussd \
   -d "sessionId=1" -d "phoneNumber=+254700999888" -d "text=1*1*1*3*1"
 ```
 
+To register as a mechanic, choose `5` from the English main menu, then enter
+the business name, location, service numbers, phone number, and email address.
+
 Then simulate the mechanic accepting via the SMS webhook:
 
 ```bash

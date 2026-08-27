@@ -12,6 +12,8 @@ Response format: a plain-text string starting with:
   "END ..."  -> close the session, this is the final message
 """
 
+import re
+
 from flask import Blueprint, request, Response
 
 from data import store
@@ -35,6 +37,8 @@ TRANSLATIONS = {
         "invalid": "Invalid selection.",
         "invalid_mechanic": "Invalid mechanic selection.",
         "other_location": "Enter your county name:",
+        "phone": "Enter your phone number:",
+        "email": "Enter your email address:",
         "welcome": "Welcome to JuaSmart",
         "find_mechanic": "Find a mechanic",
         "report_breakdown": "Report breakdown",
@@ -56,6 +60,8 @@ TRANSLATIONS = {
         "invalid": "Chaguo si sahihi.",
         "invalid_mechanic": "Chaguo la fundi si sahihi.",
         "other_location": "Ingiza jina la kaunti yako:",
+        "phone": "Ingiza nambari yako ya simu:",
+        "email": "Ingiza anwani yako ya barua pepe:",
         "welcome": "Karibu JuaSmart",
         "find_mechanic": "Tafuta fundi",
         "report_breakdown": "Ripoti kuharibika kwa gari",
@@ -333,11 +339,26 @@ def ussd():
             )
 
         if len(parts) == 4:
+            return _menu_response(TRANSLATIONS[language]["phone"])
+
+        if len(parts) == 5:
+            return _menu_response(TRANSLATIONS[language]["email"])
+
+        if len(parts) == 6:
             try:
                 name = parts[1].strip()
                 location = store.get_location_by_id(parts[2])
                 service_ids = [s.strip() for s in parts[3].split(",") if s.strip()]
-                if not name or not location or not service_ids:
+                phone = parts[4].strip()
+                email = parts[5].strip()
+                if (
+                    not name
+                    or not location
+                    or not service_ids
+                    or not phone
+                    or not re.fullmatch(r"\+?\d{9,15}", phone)
+                    or not re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]+", email)
+                ):
                     raise ValueError
                 if any(store.get_service_by_id(service_id) is None for service_id in service_ids):
                     raise ValueError
@@ -347,7 +368,8 @@ def ussd():
             try:
                 mechanic = store.register_mechanic(
                     name=name,
-                    phone=phone_number,
+                    phone=phone,
+                    email=email,
                     location_id=location["id"],
                     service_ids=service_ids,
                 )
