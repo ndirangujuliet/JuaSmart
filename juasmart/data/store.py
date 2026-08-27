@@ -137,7 +137,7 @@ def register_mechanic(name, phone, location_id, service_ids):
     mechanic = {
         "id": str(uuid.uuid4()),
         "name": name,
-        "phone": phone,
+        "phone": _normalize_phone(phone),
         "location_id": int(location_id),
         "lat": location["lat"] if location else 0,
         "lng": location["lng"] if location else 0,
@@ -148,10 +148,24 @@ def register_mechanic(name, phone, location_id, service_ids):
     return mechanic
 
 
+def _normalize_phone(phone):
+    """Keep phone matching consistent with utils.sms.normalize_phone."""
+    if not phone:
+        return ""
+    digits = "".join(c for c in str(phone) if c.isdigit())
+    if digits.startswith("0") and len(digits) >= 10:
+        digits = "254" + digits[1:]
+    elif len(digits) == 9 and digits.startswith("7"):
+        digits = "254" + digits
+    if digits.startswith("254"):
+        return f"+{digits}"
+    return str(phone).strip()
+
+
 def create_request(driver_phone, mechanic_id, location_id, service_id):
     req = {
         "id": str(uuid.uuid4())[:8],  # short ID, easy to read back in an SMS
-        "driver_phone": driver_phone,
+        "driver_phone": _normalize_phone(driver_phone),
         "mechanic_id": mechanic_id,
         "location_id": int(location_id),
         "service_id": int(service_id),
@@ -168,12 +182,13 @@ def get_request_by_id(request_id):
 
 def get_pending_request_for_mechanic(mechanic_phone):
     """Most recent pending request addressed to this mechanic's phone."""
+    target = _normalize_phone(mechanic_phone)
     candidates = [
         r
         for r in REQUESTS
         if r["status"] == "PENDING"
         and get_mechanic_by_id(r["mechanic_id"])
-        and get_mechanic_by_id(r["mechanic_id"])["phone"] == mechanic_phone
+        and _normalize_phone(get_mechanic_by_id(r["mechanic_id"])["phone"]) == target
     ]
     if not candidates:
         return None

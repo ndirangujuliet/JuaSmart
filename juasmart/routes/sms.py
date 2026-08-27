@@ -1,15 +1,15 @@
 """
 Inbound SMS webhook for Africa's Talking.
 
-When a mechanic replies "YES" or "NO" to a breakdown request SMS, Africa's
-Talking POSTs the reply here. We find that mechanic's most recent pending
-request and update it, then notify the driver by SMS.
+SokoSure-style: AT POSTs replies to the shortcode callback; we advance the
+pending dispatch (YES/NO) and SMS the driver. Failures return 200 so AT
+does not retry endlessly.
 """
 
 from flask import Blueprint, request, jsonify
 
-from data import store
-from utils.sms import send_sms
+from data import sms_store, store
+from utils.sms import normalize_phone, send_sms
 
 sms_bp = Blueprint("sms", __name__)
 
@@ -17,15 +17,14 @@ ACCEPT_WORDS = {"1", "yes", "y", "accept"}
 DECLINE_WORDS = {"2", "no", "n", "decline"}
 
 # Roughly how long a mechanic typically takes to reach the driver.
-# In production this could vary by mechanic or by distance instead of
-# being a flat number.
 DEFAULT_ETA_MINUTES = 15
 
 
+@sms_bp.route("/sms", methods=["POST"])
 @sms_bp.route("/sms/inbound", methods=["POST"])
 @sms_bp.route("/sms/incoming", methods=["POST"])
 def sms_inbound():
-    from_number = request.values.get("from", "")
+    from_number = normalize_phone(request.values.get("from", ""))
     text = request.values.get("text", "").strip().lower()
     sms_store.record_sms(
         from_number,
@@ -37,12 +36,9 @@ def sms_inbound():
 
     req = store.get_pending_request_for_mechanic(from_number)
     if not req:
-        # Nothing pending for this number — nothing to do, but still
-        # return 200 so Africa's Talking doesn't retry.
         return jsonify({"status": "ignored", "reason": "no pending request"}), 200
 
     mechanic = store.get_mechanic_by_id(req["mechanic_id"])
-    location = store.get_location_by_id(req["location_id"])
     service = store.get_service_by_id(req["service_id"])
 
     if text in ACCEPT_WORDS:
@@ -65,12 +61,12 @@ def sms_inbound():
             req["driver_phone"],
             (
                 f"{mechanic['name']} is unavailable right now.\n"
-                "Dial *123# and choose 'Find a mechanic' to try another garage."
+                "Dial the JuaSmart code and choose 'Find a mechanic' "
+                "to try another garage."
             ),
         )
         return jsonify({"status": "declined", "requestId": req["id"]}), 200
 
-    # Unrecognized reply
     send_sms(
         from_number,
         "Sorry, we didn't understand that. Reply YES to accept or NO to decline.",
