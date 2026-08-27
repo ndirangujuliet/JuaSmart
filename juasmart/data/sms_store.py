@@ -39,8 +39,8 @@ def _connect():
     return connection
 
 
-def record_outgoing(recipient, message, status, provider_response=None, error=None):
-    """Persist one outgoing SMS attempt and return its database ID."""
+def record_sms(recipient, message, status, provider_response=None, error=None, direction="outgoing"):
+    """Persist one SMS event and return its database ID."""
     response_text = (
         json.dumps(provider_response, default=str)
         if provider_response is not None
@@ -55,7 +55,7 @@ def record_outgoing(recipient, message, status, provider_response=None, error=No
             """
             ,
             (
-                "outgoing",
+                direction,
                 recipient,
                 message,
                 status,
@@ -67,10 +67,20 @@ def record_outgoing(recipient, message, status, provider_response=None, error=No
         return cursor.lastrowid
 
 
-def get_logs(limit=100):
-    """Return the newest SMS logs first."""
+def record_outgoing(recipient, message, status, provider_response=None, error=None):
+    return record_sms(recipient, message, status, provider_response, error)
+
+
+def get_logs(limit=100, direction=None):
+    """Return the newest SMS logs first, optionally by direction."""
     with _connect() as connection:
-        rows = connection.execute(
-            "SELECT * FROM sms_logs ORDER BY id DESC LIMIT ?", (limit,)
-        ).fetchall()
+        if direction in {"incoming", "outgoing"}:
+            rows = connection.execute(
+                "SELECT * FROM sms_logs WHERE direction = ? ORDER BY id DESC LIMIT ?",
+                (direction, limit),
+            ).fetchall()
+        else:
+            rows = connection.execute(
+                "SELECT * FROM sms_logs ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
     return [dict(row) for row in rows]

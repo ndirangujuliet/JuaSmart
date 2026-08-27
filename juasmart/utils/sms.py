@@ -51,9 +51,13 @@ def send_sms(to, message):
             response = _sms_client.send(message, recipients)
         else:
             response = _sms_client.send(message, recipients, sender_id=sender)
-        response_recipients = response.get("SMSMessageData", {}).get("Recipients")
-        status = "sent" if response_recipients else "failed"
-        sms_store.record_outgoing(recipient, message, status, response)
+        response_recipients = response.get("SMSMessageData", {}).get("Recipients", [])
+        recipient_status = (
+            response_recipients[0].get("status", "unknown").lower()
+            if response_recipients
+            else "failed"
+        )
+        sms_store.record_outgoing(recipient, message, recipient_status, response)
         return response
     except Exception as exc:  # noqa: BLE001
         sms_store.record_outgoing(recipient, message, "failed", error=str(exc))

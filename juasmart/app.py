@@ -13,7 +13,7 @@ Production (Render uses this via the Procfile / start command):
 """
 
 import os
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from dotenv import load_dotenv
 
 from routes.ussd import ussd_bp
@@ -61,6 +61,17 @@ def debug_services():
 def debug_sms():
     """List recent outgoing SMS attempts."""
     return jsonify(sms_store.get_logs())
+
+
+@app.route("/admin/sms/logs", methods=["GET"])
+def admin_sms_logs():
+    direction = request.args.get("direction")
+    try:
+        limit = min(int(request.args.get("limit", 100)), 500)
+    except ValueError:
+        limit = 100
+    logs = sms_store.get_logs(limit=limit, direction=direction)
+    return jsonify({"count": len(logs), "logs": logs})
 
 
 if __name__ == "__main__":

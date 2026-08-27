@@ -23,9 +23,17 @@ DEFAULT_ETA_MINUTES = 15
 
 
 @sms_bp.route("/sms/inbound", methods=["POST"])
+@sms_bp.route("/sms/incoming", methods=["POST"])
 def sms_inbound():
     from_number = request.values.get("from", "")
     text = request.values.get("text", "").strip().lower()
+    sms_store.record_sms(
+        from_number,
+        text,
+        "received",
+        {"messageId": request.values.get("id", "")},
+        direction="incoming",
+    )
 
     req = store.get_pending_request_for_mechanic(from_number)
     if not req:
