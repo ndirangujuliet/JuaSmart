@@ -13,6 +13,6 @@ services:
       - key: AT_SHORTCODE
         sync: false
       - key: SMS_DRY_RUN
-        value: "true"
+        value: "false"
       - key: SMS_DB_PATH
         value: /var/data/sms_logs.db
