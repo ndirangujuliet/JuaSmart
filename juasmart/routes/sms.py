@@ -9,15 +9,13 @@ does not retry endlessly.
 from flask import Blueprint, request, jsonify
 
 from data import sms_store, store
+from utils.respond import respond_to_request
 from utils.sms import normalize_phone, send_sms
 
 sms_bp = Blueprint("sms", __name__)
 
 ACCEPT_WORDS = {"1", "yes", "y", "accept"}
 DECLINE_WORDS = {"2", "no", "n", "decline"}
-
-# Roughly how long a mechanic typically takes to reach the driver.
-DEFAULT_ETA_MINUTES = 15
 
 
 @sms_bp.route("/sms", methods=["POST"])
@@ -38,34 +36,13 @@ def sms_inbound():
     if not req:
         return jsonify({"status": "ignored", "reason": "no pending request"}), 200
 
-    mechanic = store.get_mechanic_by_id(req["mechanic_id"])
-    service = store.get_service_by_id(req["service_id"])
-
     if text in ACCEPT_WORDS:
-        store.update_request_status(req["id"], "ACCEPTED")
-        send_sms(
-            req["driver_phone"],
-            (
-                f"{mechanic['name']} has accepted your request.\n"
-                f"Mechanic: {mechanic['name']}\n"
-                f"Service: {service['name']}\n"
-                f"Contact: {mechanic['phone']}\n"
-                f"ETA: {DEFAULT_ETA_MINUTES} minutes."
-            ),
-        )
-        return jsonify({"status": "accepted", "requestId": req["id"]}), 200
+        ok, status, _ = respond_to_request(req, "accept")
+        return jsonify({"status": status, "requestId": req["id"]}), 200
 
     if text in DECLINE_WORDS:
-        store.update_request_status(req["id"], "DECLINED")
-        send_sms(
-            req["driver_phone"],
-            (
-                f"{mechanic['name']} is unavailable right now.\n"
-                "Dial the JuaSmart code and choose 'Find a mechanic' "
-                "to try another garage."
-            ),
-        )
-        return jsonify({"status": "declined", "requestId": req["id"]}), 200
+        ok, status, _ = respond_to_request(req, "decline")
+        return jsonify({"status": status, "requestId": req["id"]}), 200
 
     send_sms(
         from_number,

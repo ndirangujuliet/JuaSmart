@@ -75,6 +75,10 @@ MECHANICS = [
     },
 ]
 
+# ---- Clients (optional driver profiles) -----------------------------
+
+CLIENTS = []
+
 # ---- Requests (breakdown dispatch tickets) --------------------------
 
 REQUESTS = []
@@ -203,13 +207,59 @@ def _normalize_phone(phone):
     return str(phone).strip()
 
 
-def create_request(driver_phone, mechanic_id, location_id, service_id):
+def get_client_by_id(client_id):
+    return next((c for c in CLIENTS if c["id"] == client_id), None)
+
+
+def get_client_by_phone(phone):
+    target = _normalize_phone(phone)
+    return next(
+        (c for c in CLIENTS if _normalize_phone(c["phone"]) == target),
+        None,
+    )
+
+
+def register_client(name, phone, pin):
+    """Create or replace a lightweight client profile (demo PIN, plain text)."""
+    existing = get_client_by_phone(phone)
+    if existing:
+        existing["name"] = name.strip()
+        existing["pin"] = pin
+        return existing
+    client = {
+        "id": str(uuid.uuid4())[:8],
+        "phone": _normalize_phone(phone),
+        "name": name.strip(),
+        "pin": pin,
+        "created_at": datetime.utcnow().isoformat(),
+    }
+    CLIENTS.append(client)
+    return client
+
+
+def authenticate_client(phone, pin):
+    client = get_client_by_phone(phone)
+    if not client or client["pin"] != pin:
+        return None
+    return client
+
+
+def create_request(
+    driver_phone,
+    mechanic_id,
+    location_id,
+    service_id,
+    client_id=None,
+    client_name=None,
+):
     req = {
         "id": str(uuid.uuid4())[:8],  # short ID, easy to read back in an SMS
         "driver_phone": _normalize_phone(driver_phone),
         "mechanic_id": mechanic_id,
         "location_id": int(location_id),
         "service_id": int(service_id),
+        "client_id": client_id,
+        "client_name": client_name,
         "status": "PENDING",  # PENDING -> ACCEPTED | DECLINED
         "created_at": datetime.utcnow().isoformat(),
     }
@@ -219,6 +269,16 @@ def create_request(driver_phone, mechanic_id, location_id, service_id):
 
 def get_request_by_id(request_id):
     return next((r for r in REQUESTS if r["id"] == request_id), None)
+
+
+def get_pending_requests_for_mechanic(mechanic_id):
+    """Pending jobs for a mechanic, oldest first (stable USSD list order)."""
+    pending = [
+        r
+        for r in REQUESTS
+        if r["status"] == "PENDING" and r["mechanic_id"] == mechanic_id
+    ]
+    return sorted(pending, key=lambda r: r["created_at"])
 
 
 def get_pending_request_for_mechanic(mechanic_phone):
