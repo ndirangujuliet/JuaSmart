@@ -351,8 +351,12 @@ def ussd():
                     location_id=location["id"],
                     service_ids=service_ids,
                 )
-            except (TypeError, ValueError, KeyError):
-                return _menu_response("Invalid service selection.", end=True)
+            except Exception as exc:  # noqa: BLE001
+                print("Mechanic registration failed:", exc)
+                return _menu_response(
+                    "Registration could not be completed. Please try again.",
+                    end=True,
+                )
             return _menu_response(
                 f"Registered! Welcome, {mechanic['name']}.\n"
                 f"Location: {location['name']}\n"
