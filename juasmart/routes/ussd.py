@@ -413,6 +413,22 @@ def ussd():
                     "Registration could not be completed. Please try again.",
                     end=True,
                 )
+            service_names = ", ".join(
+                store.get_service_by_id(service_id)["name"]
+                for service_id in service_ids
+            )
+            registration_sms = (
+                "JuaSmart: mechanic registration received.\n"
+                f"Business: {mechanic['name']}\n"
+                f"Location: {location['name']}\n"
+                f"Services: {service_names}\n"
+                f"Phone: {mechanic['phone']}\n"
+                f"Email: {mechanic['email']}"
+            )
+            try:
+                send_sms(mechanic["phone"], registration_sms)
+            except Exception as exc:  # noqa: BLE001
+                print("Registration SMS failed:", exc)
             return _menu_response(
                 f"Registered! Welcome, {mechanic['name']}.\n"
                 f"Location: {location['name']}\n"
