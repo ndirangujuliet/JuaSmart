@@ -272,31 +272,46 @@ def ussd():
                 end=True,
             )
 
-    # ---- 2. Report breakdown: location -> auto "General repair" ----
+    # ---- 2. Report breakdown: location -> service -> phone -> mechanic
     if root == "2":
-        general_service = store.get_service_by_id(6)  # General repair
-
         if len(parts) == 1:
             return _menu_response(_locations_menu_text(language))
 
         if len(parts) == 2:
             location = store.get_location_by_id(parts[1])
             if not location:
-                return _menu_response("Invalid selection.", end=True)
-            mechanics = store.find_mechanics(location["id"], general_service["id"])
-            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+            return _menu_response(_services_menu_text(language))
 
         if len(parts) == 3:
             location = store.get_location_by_id(parts[1])
-            if not location:
-                return _menu_response("Invalid selection.", end=True)
-            mechanics = store.find_mechanics(location["id"], general_service["id"])
-            try:
-                chosen = mechanics[int(parts[2]) - 1]
-            except (ValueError, IndexError):
-                return _menu_response("Invalid mechanic selection.", end=True)
+            service = store.get_service_by_id(parts[2])
+            if not location or not service:
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+            return _menu_response(TRANSLATIONS[language]["phone"])
 
-            req = _dispatch_request(phone_number, chosen, location, general_service)
+        if len(parts) == 4:
+            location = store.get_location_by_id(parts[1])
+            service = store.get_service_by_id(parts[2])
+            phone = parts[3].strip()
+            if not location or not service or not re.fullmatch(r"\+?\d{9,15}", phone):
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+            mechanics = store.find_mechanics(location["id"], service["id"])
+            return _menu_response(_mechanics_list_text(mechanics, location["name"], language))
+
+        if len(parts) == 5:
+            location = store.get_location_by_id(parts[1])
+            service = store.get_service_by_id(parts[2])
+            phone = parts[3].strip()
+            if not location or not service or not re.fullmatch(r"\+?\d{9,15}", phone):
+                return _menu_response(TRANSLATIONS[language]["invalid"], end=True)
+            mechanics = store.find_mechanics(location["id"], service["id"])
+            try:
+                chosen = mechanics[int(parts[4]) - 1]
+            except (ValueError, IndexError):
+                return _menu_response(TRANSLATIONS[language]["invalid_mechanic"], end=True)
+
+            req = _dispatch_request(phone, chosen, location, service)
             return _menu_response(
                 f"Request sent to {chosen['name']}.\n"
                 f"Ref: {req['id']}\n"
