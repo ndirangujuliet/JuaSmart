@@ -18,7 +18,6 @@ LOCATIONS = [
     {"id": 2, "name": "Ruaka", "lat": -1.2033, "lng": 36.7833},
     {"id": 3, "name": "Ruiru", "lat": -1.1495, "lng": 36.9622},
     {"id": 4, "name": "Thika", "lat": -1.0388, "lng": 37.0834},
-    {"id": 48, "name": "Other", "lat": 0, "lng": 0},
 ]
 
 SERVICES = [
