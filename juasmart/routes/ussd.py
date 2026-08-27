@@ -26,6 +26,7 @@ TRANSLATIONS = {
     "en": {
         "select_location": "Select your location:",
         "service_needed": "What service do you need?",
+        "services_offered": "Which services do you offer?",
         "available": "Available mechanics near {location}:",
         "no_mechanics": "Sorry, no available mechanics found near {location} right now.",
         "choose_mechanic": "Reply with the number to request assistance.",
@@ -53,6 +54,7 @@ TRANSLATIONS = {
     "sw": {
         "select_location": "Chagua eneo lako:",
         "service_needed": "Unahitaji huduma gani?",
+        "services_offered": "Unatoa huduma gani?",
         "available": "Mafundi wanaopatikana karibu na {location}:",
         "no_mechanics": "Samahani, hakuna fundi anayepatikana karibu na {location} kwa sasa.",
         "choose_mechanic": "Jibu kwa nambari kuomba msaada.",
@@ -368,7 +370,11 @@ def ussd():
 
         if len(parts) == 3:
             return _menu_response(
-                _services_menu_text(language)
+                _services_menu_text(language).replace(
+                    TRANSLATIONS[language]["service_needed"],
+                    TRANSLATIONS[language]["services_offered"],
+                    1,
+                )
                 + "\n\n" + TRANSLATIONS[language]["services_hint"]
             )
 
